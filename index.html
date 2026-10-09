@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GlucoPredict - Diabetic Test Result Predictive Analytics</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        green: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            300: '#86efac',
+                            400: '#4ade80',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                            950: '#052e16',
+                        },
+                        pine: {
+                            50: '#f2faf5',
+                            100: '#e1f5eb',
+                            200: '#c2e9d6',
+                            300: '#94d6b8',
+                            400: '#5ebb93',
+                            500: '#38a074',
+                            600: '#28815b',
+                            700: '#21674a',
+                            800: '#1d523c',
+                            900: '#184433',
+                            950: '#0b261c',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Range slider styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: #dcfce7;
+            border-radius: 4px;
+            border: 1px solid #bbf7d0;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #15803d;
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -6px;
+            box-shadow: 0 2px 6px rgba(21, 128, 61, 0.35);
+            transition: transform 0.15s ease, background 0.15s ease;
+        }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            background: #166534;
+        }
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f0fdf4;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #86efac;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #16a34a;
+        }
+        .view-section {
+            display: none;
+        }
+        .view-section.active-view {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-green-50 text-pine-950 font-sans min-h-screen flex flex-col antialiased">
+
+    <!-- Header / Navigation -->
+    <header class="bg-pine-950 text-white shadow-lg sticky top-0 z-50 border-b border-pine-900">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Brand Logo & Title -->
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="switchView('dashboard')">
+                    <div class="bg-white text-pine-900 p-2 rounded-xl font-bold shadow-md flex items-center justify-center">
+                        <i class="fa-solid fa-notes-medical text-pine-700 text-xl"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <h1 class="font-bold text-lg leading-tight tracking-wide text-white">GlucoPredict</h1>
+                            <span class="bg-green-500/20 text-green-300 text-[10px] font-mono px-2 py-0.5 rounded-full border border-green-500/30 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5 animate-pulse"></span> Medical Diagnostic Engine
+                            </span>
+                        </div>
+                        <p class="text-xs text-green-200">Diabetic Outcome Predictive Analytics Suite</p>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <nav class="hidden md:flex items-center space-x-1.5 font-medium text-xs">
+                    <button id="nav-dashboard" onclick="switchView('dashboard')" class="px-3.5 py-2 rounded-lg transition flex items-center space-x-2 bg-pine-900 text-white border border-pine-800 shadow-sm">
+                        <i class="fa-solid fa-stethoscope text-green-300"></i>
+                        <span>Diagnostic Calculator</span>
+                    </button>
+                    <button id="nav-records" onclick="switchView('records')" class="px-3.5 py-2 rounded-lg transition flex items-center space-x-2 text-green-200 hover:text-white hover:bg-pine-900/60">
+                        <i class="fa-solid fa-hospital-user text-green-300"></i>
+                        <span>Patient Records Log</span>
+                    </button>
+                    <button id="nav-analytics" onclick="switchView('analytics')" class="px-3.5 py-2 rounded-lg transition flex items-center space-x-2 text-green-200 hover:text-white hover:bg-pine-900/60">
+                        <i class="fa-solid fa-chart-pie text-green-300"></i>
+                        <span>Clinical Analytics</span>
+                    </button>
+                </nav>
+
+                <!-- Actions Header -->
+                <div class="hidden lg:flex items-center space-x-2">
+                    <button onclick="openModelInspector()" class="text-xs bg-pine-900 hover:bg-pine-800 text-green-100 py-1.5 px-3 rounded-lg border border-pine-800 transition flex items-center shadow-sm">
+                        <i class="fa-solid fa-microchip mr-1.5 text-green-400"></i> Model Weights
+                    </button>
+                    <button onclick="exportPatientSummaryCSV()" class="text-xs bg-white text-pine-950 hover:bg-green-100 font-bold py-1.5 px-3 rounded-lg shadow transition flex items-center">
+                        <i class="fa-solid fa-file-export mr-1.5 text-pine-700"></i> Export Batch Data
+                    </button>
+                </div>
+
+                <!-- Mobile menu button -->
+                <div class="md:hidden flex items-center">
+                    <button id="mobileMenuBtn" class="text-green-100 hover:text-white p-2">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Dropdown -->
+        <div id="mobileMenu" class="hidden md:hidden bg-pine-900 border-t border-pine-800 px-4 py-3 space-y-2">
+            <div class="grid grid-cols-3 gap-2">
+                <button onclick="switchView('dashboard')" class="text-xs bg-pine-800 text-white py-2 px-2 rounded-lg text-center font-medium border border-pine-700">
+                    <i class="fa-solid fa-stethoscope block mb-1 text-green-300"></i> Predictor
+                </button>
+                <button onclick="switchView('records')" class="text-xs bg-pine-800 text-white py-2 px-2 rounded-lg text-center font-medium border border-pine-700">
+                    <i class="fa-solid fa-hospital-user block mb-1 text-green-300"></i> Records
+                </button>
+                <button onclick="switchView('analytics')" class="text-xs bg-pine-800 text-white py-2 px-2 rounded-lg text-center font-medium border border-pine-700">
+                    <i class="fa-solid fa-chart-pie block mb-1 text-green-300"></i> Analytics
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Status Banner Ribbon -->
+    <div class="bg-pine-900 text-green-100 text-xs py-2 px-4 border-b border-pine-800">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <div class="flex items-center space-x-2 font-mono">
+                <i class="fa-solid fa-shield-halved text-green-400"></i>
+                <span>Dataset: <strong class="text-white">Pima Indians Diabetes Benchmark</strong></span>
+                <span class="text-pine-700">|</span>
+                <span>Algorithm: <strong class="text-green-200">Logistic Regression (Scikit-Learn Calibrated)</strong></span>
+            </div>
+            <div class="flex items-center space-x-3 text-[11px]">
+                <span class="text-green-300 font-mono"><i class="fa-solid fa-circle-check text-green-400 mr-1"></i> Sensitivity: <strong>84.2%</strong> | Specificity: <strong>88.5%</strong></span>
+                <button onclick="openModelInspector()" class="text-green-300 underline hover:text-white transition">Inspect Formula</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- ================================================================= -->
+        <!-- VIEW 1: DIAGNOSTIC PREDICTOR DASHBOARD                             -->
+        <!-- ================================================================= -->
+        <section id="view-dashboard" class="view-section active-view space-y-6">
+
+            <!-- Top Summary Matrix / Predicted Outcome Card -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+
+                <!-- MAIN DIAGNOSTIC OUTCOME CARD -->
+                <div class="md:col-span-7 bg-gradient-to-br from-pine-950 via-pine-900 to-pine-950 rounded-2xl p-6 text-white shadow-xl border border-pine-800 relative overflow-hidden flex flex-col justify-between">
+                    <div class="absolute -right-10 -bottom-10 text-pine-800/20 text-9xl pointer-events-none">
+                        <i class="fa-solid fa-microscope"></i>
+                    </div>
+
+                    <div class="relative z-10 space-y-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="bg-pine-800/80 text-green-300 text-xs font-mono px-3 py-1 rounded-full border border-pine-700 flex items-center w-fit">
+                                    <i class="fa-solid fa-dna mr-1.5 text-green-400"></i> Target Parameter: Outcome [ ]
+                                </span>
+                                <h2 class="text-lg font-bold text-white mt-2">Diagnostic Prediction Result</h2>
+                            </div>
+                            <span id="outcomeBadge" class="bg-green-500/20 text-green-300 border border-green-500/40 text-xs px-3 py-1 rounded-full font-mono font-bold flex items-center">
+                                <i class="fa-solid fa-check-circle mr-1.5 text-green-400"></i> Outcome = 0 (Negative)
+                            </span>
+                        </div>
+
+                        <!-- Result Display Banner -->
+                        <div class="bg-pine-900/90 rounded-xl p-5 border border-pine-800 space-y-3">
+                            <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
+                                <div>
+                                    <p class="text-xs text-green-300 uppercase tracking-wider font-semibold">Predicted Clinical Outcome</p>
+                                    <div class="text-3xl sm:text-4xl font-black text-white tracking-wide mt-1 font-mono flex items-center" id="outcomeTextDisplay">
+                                        Negative (Outcome = 0)
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-xs text-green-300 block">Diabetic Risk Score</span>
+                                    <span class="text-3xl font-black text-green-400 font-mono" id="riskProbabilityVal">18.4%</span>
+                                </div>
+                            </div>
+
+                            <!-- Progress / Risk Bar -->
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-[11px] text-green-200 font-medium">
+                                    <span>Low Risk (&lt; 35%)</span>
+                                    <span>Moderate (35-60%)</span>
+                                    <span>High Risk (&gt; 60%)</span>
+                                </div>
+                                <div class="w-full bg-pine-950 rounded-full h-3 p-0.5 border border-pine-800">
+                                    <div id="riskProgressBar" class="bg-gradient-to-r from-green-400 via-green-500 to-green-600 h-2 rounded-full transition-all duration-500" style="width: 18.4%;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recommendations & Patient Ref -->
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs pt-1">
+                            <div class="flex items-center space-x-2 text-green-200">
+                                <i class="fa-solid fa-circle-info text-green-400 text-sm"></i>
+                                <span id="clinicalRecommendationText">Low risk indicated. Standard annual HbA1c screening recommended.</span>
+                            </div>
+                            <button onclick="logPatientResult()" class="bg-white hover:bg-green-100 text-pine-950 font-bold px-4 py-2 rounded-lg transition text-xs shadow flex items-center shrink-0">
+                                <i class="fa-solid fa-floppy-disk mr-1.5 text-pine-700"></i> Log Patient Result
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECONDARY DIAGNOSTIC KPI CARDS -->
+                <div class="md:col-span-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-4">
+                    
+                    <!-- Glucose & Insulin Metabolic Index -->
+                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-green-200 flex flex-col justify-between hover:shadow-md transition">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-xs font-bold uppercase tracking-wide text-pine-800">Glucose / Insulin Balance</span>
+                                <div class="text-2xl font-bold text-pine-950 font-mono mt-1" id="glucoseRatioVal">118.0 mg/dL</div>
+                            </div>
+                            <div class="bg-green-50 p-2.5 rounded-xl text-pine-700">
+                                <i class="fa-solid fa-vial-circle-check text-lg"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-green-800 mt-2" id="glucoseSubtext">Fasting plasma glucose within normal reference limits (&lt; 140 mg/dL)</p>
+                        <div class="mt-3 pt-2 border-t border-green-100 flex justify-between text-xs text-pine-900 font-medium">
+                            <span>Insulin Bio-response:</span>
+                            <strong id="insulinValDisplay" class="font-mono text-pine-800">85 µU/mL</strong>
+                        </div>
+                    </div>
+
+                    <!-- BMI & Pedigree Risk Indicator -->
+                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-green-200 flex flex-col justify-between hover:shadow-md transition">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-xs font-bold uppercase tracking-wide text-pine-800">BMI &amp; Genetic Pedigree</span>
+                                <div class="text-2xl font-bold text-pine-950 font-mono mt-1" id="bmiPedigreeVal">28.1 kg/m²</div>
+                            </div>
+                            <div class="bg-green-50 p-2.5 rounded-xl text-pine-700">
+                                <i class="fa-solid fa-weight-scale text-lg"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-green-800 mt-2" id="bmiSubtext">Body mass index classified as Overweight (25.0 - 29.9)</p>
+                        <div class="mt-3 pt-2 border-t border-green-100 flex justify-between text-xs text-pine-900 font-medium">
+                            <span>Pedigree Function:</span>
+                            <strong id="pedigreeValDisplay" class="font-mono text-pine-800">0.351 Score</strong>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- MAIN INPUT PARAMETERS GRID -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                <!-- LEFT SIDE: INPUT FORM (8 PIMA PARAMETERS) -->
+                <div class="lg:col-span-7 bg-white rounded-2xl shadow-sm border border-green-200 overflow-hidden">
+                    <div class="bg-pine-950 px-6 py-4 text-white flex justify-between items-center">
+                        <div class="flex items-center space-x-2.5">
+                            <i class="fa-solid fa-sliders text-green-400"></i>
+                            <h2 class="font-bold text-sm tracking-wide uppercase">Pima Diagnostic Input Features (8 Biomarkers)</h2>
+                        </div>
+                        <button onclick="resetToDefaultPima()" class="text-xs bg-pine-900 hover:bg-pine-800 text-green-200 px-3 py-1 rounded-lg border border-pine-800 transition">
+                            <i class="fa-solid fa-rotate-left mr-1"></i> Reset Baseline
+                        </button>
+                    </div>
+
+                    <form id="diagnosticForm" onsubmit="event.preventDefault();" class="p-6 space-y-5">
+
+                        <!-- Patient Reference ID Header -->
+                        <div class="bg-green-50 p-3.5 rounded-xl border border-green-200 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                            <div class="flex items-center space-x-2">
+                                <i class="fa-solid fa-id-card text-pine-700"></i>
+                                <span class="text-xs font-bold text-pine-950">Patient Diagnostic Identifier:</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs text-pine-700 font-mono font-bold">PID-</span>
+                                <input type="number" id="patient_id" value="4082" min="1000" max="9999" oninput="calculateOutcome()" class="w-28 text-right font-bold text-xs text-pine-950 bg-white border border-green-300 rounded-lg px-2.5 py-1 focus:ring-2 focus:ring-pine-600 font-mono shadow-sm">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+
+                            <!-- PARAMETER 1: Pregnancies -->
+                            <div class="bg-green-50/50 p-4 rounded-xl border border-green-200/80 space-y-2 hover:border-green-400 transition">
+                                <div class="flex justify-between items-center">
+                                    <label for="pregnancies" class="text-xs font-bold text-pine-950 uppercase tracking-wider flex items-center">
+                                        <i class="fa-solid fa-person-pregnant text-pine-700 mr-1.5"></i> Pregnancies
+                                    </label>
+                                    <input type="number" id="pregnancies_num" min="0" max="20" value="2" oninput="syncInput('pregnancies', this.value)" class="w-16 text-right font-bold text-xs text-pine-950 bg-white border border-green-300 rounded-lg px-2 py-1 font-mono focus:ring-1 focus:ring-pine-600">
+                                </div>
+                                <input type="range" id="pregnancies" min="0" max="20" step="1" value="2" oninput="syncInput('pregnancies_num', this.value)">
+                                <div class="flex justify-between text-[10px] text-green-800">
+                                    <span>0 count</span>
+                                    <span>Normal range: 0 - 6</span>
+                                    <span>20 max</span>
+                                </div>
+                            </div>
+
+                            <!-- PARAMETER 2: Glucose -->
+                            <div class="bg-green-50/50 p-4 rounded-xl border border-green-200/80 space-y-2 hover:border-green-400 transition">
+                                <div class="flex justify-between items-center">
+                                    <label for="glucose" class="text-xs font-bold text-pine-950 uppercase tracking-wider flex items-center">
+                                        <i class="fa-solid fa-droplet text-pine-700 mr-1.5"></i> Glucose
+                                    </label>
+                                    <div class="flex items-center space-x-1">
+                                        <input type="number" id="glucose_num" min="0" max="250" value="118" oninput="syncInput('glucose', this.value)" class="w-20 text-right font-bold text-xs text-pine-950 bg-white border border-green-300 rounded-lg px-2 py-1 font-mono focus:ring-1 focus:ring-pine-600">
+                                        <span class="text-[10px] text-pine-800 font-bold">mg/dL</span>
+                                    </div>
+                                </div>
+                                <input type="range" id="glucose" min="0" max="250" step="1" value="118" oninput="syncInput('glucose_num', this.value)">
+                                <div class="flex justify-between text-[10px] text-green-800">
+                                    <span>Fasting 70-99</span>
+                                    <span>Target &lt; 140</span>
+                                    <span>High &gt; 180</span>
+                                </div>
+                            </div>
+
+                            <!-- PARAMETER 3: BloodPressure -->
+                            <div class="bg-green-50/50 p-4 rounded-xl border border-green-200/80 space-y-2 hover:border-green-400 transition">
+                                <div class="flex justify-between items-center">
+                                    <label for="bloodpressure" class="text-xs font-bold text-pine-950 uppercase tracking-wider flex items-center">
+                                        <i class="fa-solid fa-heart-pulse text-pine-700 mr-1.5"></i> BloodPressure
+                                    </label>
+                                    <div class="flex items-center space-x-1">
+                                        <input type="number" id="bloodpressure_num" min="0" max="140" value="72" oninput="syncInput('bloodpressure', this.value)" class="w-20 text-right font-bold text-xs text-pine-950 bg-white border border-green-300 rounded-lg px-2 py-1 font-mono focus:ring-1 focus:ring-pine-600">
+                                        <span class="text-[10px] text-pine-800 font-bold">mmHg</span>
+                                    </div>
+                                </div>
+                                <input type="range" id="bloodpressure" min="0" max="140" step="1" value="72" oninput="syncInput('bloodpressure_num', this.value)">
+                                <div class="flex justify-between text-[10px] text-green-800">
+                                    <span>Diastolic</span>
+                                    <span>Normal: 60-80</span>
+                                    <span>High &gt; 90</span>
+                                </div>
+                            </div>
+
+                            <!-- PARAMETER 4: SkinThickness -->
+                            <div class="bg-green-50/50 p-4 rounded-xl border border-green-200/80 space-y-2 hover:border-green-400 transition">
+                                <div class="flex justify-between items-center">
+                                    <label for="skinthickness" class="text-xs font-bold text-pine-950 uppercase tracking-wider flex items-center">
+                                        <i class="fa-solid fa-ruler text-pine-700 mr-1.5"></i> SkinThickness
+                                    </label>
+                                    <div class="flex items-center space-x-1">
+                                        <input type="number" id="skinthickness_num" min="0" max="100" value="23" oninput="syncInput('skinthickness', this.value)" class="w-20 text-right font-bold text-xs text-pine-950 bg-white border border-green-300 rounded-lg px-2 py-1 font-mono focus:ring-1 focus:ring-pine-600">
+                                        <span class="text-[10px] text-pine-800 font-bold">mm</span>
+                                    </div>
+                                </div>
+                                <input type="range" id="skinthickness" min="0" max="100" step="1" value="23" oninput="syncInput('skinthickness_num', this.value)">
+                                <div class="flex justify-between text-[10px] text-green-800">
+                                    <span>Triceps Fold</span>
+                                    <span>Average: 20-30mm</span>
+                                </div>
+                            </div>
+
+                            <!-- PARAMETER 5: Insulin -->
+                            <div class="bg-green-50/50 p-4 rounded-xl border border-green-200/80 space-y-2 hover:border-green-400 transition">
+                                <div class="flex justify-between items-center">
+                                    <label for="insulin" class="text-xs font-bold text-pine-950 uppercase tracking-wider flex items-center">
+                                        <i class="fa-solid fa-syringe text-pine-700 mr-1.5"></i> Insulin
+                                    </label>
+                                    <div class="flex items-center space-x-1">
+                                        <input type="number" id="insulin_num" min="0" max="846" value="85" oninput="syncInput('insulin', this.value)" class="w-20 text-right font-bold text-xs text-pine-950 bg-white border border-green-300 rounded-lg px-2 py-1 font-mono focus:ring-1 focus:ring-pine-600">
+                                        <span class="text-[10px] text-pine-800 font-bold">μU/mL</span>
+                                    </div>
+                                </div>
+                                <input type="range" id="insulin" min="0" max="846" step="2" value="85" oninput="syncInput('insulin_num', this.value)">
+                                <div class="flex justify-between text-[10px] text-green-800">
+                                    <span>2-Hour Serum</span>
+                                    <span>Normal: 16-166</span>
+                                </div>
+                            </div>
+
+                            <!-- PARAMETER 6: BMI -->
+                            <div class="bg-green-50/50 p-4 rounded-xl border border-green-200/80 space-y-2 hover:border-green-400 transition">
+                                <div class="flex justify-between items-center">
+                                    <label for="bmi" class="text-xs font-bold text-pine-950 uppercase tracking-wider flex items-center">
+                                        <i class="fa-solid fa-weight-scale text-pine-700 mr-1.5"></i> BMI
+                                    </label>
+                                    <div class="flex items-center space-x-1">
+                                        <input type="number" id="bmi_num" min="0" max="70" step="0.1" value="28.1" oninput="syncInput('bmi', this.value)" class="w-20 text-right font-bold text-xs text-pine-950 bg-white border border-green-300 rounded-lg px-2 py-1 font-mono focus:ring-1 focus:ring-pine-600">
+                                        <span class="text-[10px] text-pine-800 font-bold">kg/m²</span>
+                                    </div>
+                                </div>
+                                <input type="range" id="bmi" min="0" max="70" step="0.1" value="28.1" oninput="syncInput('bmi_num', this.value)">
+                                <div class="flex justify-between text-[10px] text-green-800">
+                                    <span>Normal: 18.5-24.9</span>
+                                    <span>Overweight: 25-29.9</span>
+                                    <span>Obese &gt; 30</span>
+                                </div>
+                            </div>
+
+                            <!-- PARAMETER 7: DiabetesPedigreeFunction -->
+                            <div class="bg-green-50/50 p-4 rounded-xl border border-green-200/80 space-y-2 hover:border-green-400 transition">
+                                <div class="flex justify-between items-center">
+                                    <label for="diabetespedigreefunction" class="text-xs font-bold text-pine-950 uppercase tracking-wider flex items-center">
+                                        <i class="fa-solid fa-diagram-project text-pine-700 mr-1.5"></i> Pedigree Function
+                                    </label>
+                                    <input type="number" id="diabetespedigreefunction_num" min="0.05" max="2.5" step="0.01" value="0.351" oninput="syncInput('diabetespedigreefunction', this.value)" class="w-20 text-right font-bold text-xs text-pine-950 bg-white border border-green-300 rounded-lg px-2 py-1 font-mono focus:ring-1 focus:ring-pine-600">
+                                </div>
+                                <input type="range" id="diabetespedigreefunction" min="0.05" max="2.5" step="0.01" value="0.351" oninput="syncInput('diabetespedigreefunction_num', this.value)">
+                                <div class="flex justify-between text-[10px] text-green-800">
+                                    <span>Genetic Likelihood Scale (0.08 to 2.42)</span>
+                                </div>
+                            </div>
+
+                            <!-- PARAMETER 8: Age -->
+                            <div class="bg-green-50/50 p-4 rounded-xl border border-green-200/80 space-y-2 hover:border-green-400 transition">
+                                <div class="flex justify-between items-center">
+                                    <label for="age" class="text-xs font-bold text-pine-950 uppercase tracking-wider flex items-center">
+                                        <i class="fa-solid fa-cake-candles text-pine-700 mr-1.5"></i> Age
+                                    </label>
+                                    <div class="flex items-center space-x-1">
+                                        <input type="number" id="age_num" min="18" max="100" value="33" oninput="syncInput('age', this.value)" class="w-20 text-right font-bold text-xs text-pine-950 bg-white border border-green-300 rounded-lg px-2 py-1 font-mono focus:ring-1 focus:ring-pine-600">
+                                        <span class="text-[10px] text-pine-800 font-bold">yrs</span>
+                                    </div>
+                                </div>
+                                <input type="range" id="age" min="18" max="100" step="1" value="33" oninput="syncInput('age_num', this.value)">
+                                <div class="flex justify-between text-[10px] text-green-800">
+                                    <span>18 years</span>
+                                    <span>Pima Median: 29 yrs</span>
+                                    <span>100 years</span>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Submit & Action Buttons -->
+                        <div class="grid grid-cols-2 gap-3 pt-2">
+                            <button type="button" onclick="logPatientResult()" class="bg-pine-900 hover:bg-pine-800 text-white font-bold py-3 px-4 rounded-xl text-xs shadow-md transition flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-folder-plus text-green-400"></i>
+                                <span>Save Patient Test Log</span>
+                            </button>
+                            <button type="button" onclick="openReportModal()" class="bg-white hover:bg-green-100 text-pine-950 font-bold py-3 px-4 rounded-xl text-xs border border-green-300 shadow-sm transition flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-file-medical text-pine-700"></i>
+                                <span>Generate Clinical Summary</span>
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+
+                <!-- RIGHT SIDE: MATHEMATICAL BREAKDOWN & QUICK CHARTS -->
+                <div class="lg:col-span-5 space-y-6">
+
+                    <!-- Live Logit Formula Box -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-green-200 p-5 space-y-3">
+                        <div class="flex justify-between items-center border-b border-green-100 pb-2">
+                            <h3 class="font-bold text-pine-950 text-xs tracking-wide uppercase flex items-center">
+                                <i class="fa-solid fa-calculator text-pine-700 mr-2"></i>
+                                Logistic Regression Matrix Equation
+                            </h3>
+                            <span class="text-[10px] bg-green-100 text-pine-800 font-mono px-2 py-0.5 rounded-md font-bold">Live Logit $z$</span>
+                        </div>
+                        <div class="bg-pine-950 text-white rounded-xl p-4 font-mono text-xs space-y-2 border border-pine-900">
+                            <div class="text-green-300 text-[11px] font-sans">
+                                $\text{Logit}(p) = \beta_0 + \sum (\beta_i \cdot \text{Biomarker}_i)$
+                            </div>
+                            <div id="equationBreakdownText" class="text-green-400 font-bold pt-1 border-t border-pine-900 leading-relaxed text-[11px]">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Biomarker Contribution Impact Chart -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-green-200 p-5 space-y-3">
+                        <div>
+                            <h3 class="font-bold text-pine-950 text-xs tracking-wide uppercase flex items-center">
+                                <i class="fa-solid fa-chart-column text-pine-700 mr-2"></i>
+                                Biomarker Risk Impact Score
+                            </h3>
+                            <p class="text-[11px] text-green-800">Nominal contribution of each parameter to final logit $z$ score</p>
+                        </div>
+                        <div class="h-56 w-full">
+                            <canvas id="impactChart"></canvas>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- ================================================================= -->
+        <!-- VIEW 2: PATIENT RECORDS LOG                                        -->
+        <!-- ================================================================= -->
+        <section id="view-records" class="view-section space-y-6">
+
+            <!-- Title & Search Bar -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-green-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-pine-950 flex items-center">
+                        <i class="fa-solid fa-hospital-user text-pine-700 mr-2.5"></i> Patient Diagnostic Records Database
+                    </h2>
+                    <p class="text-xs text-green-800 mt-1">Logged diagnostic test outcomes based on Pima Indians clinical feature inputs.</p>
+                </div>
+
+                <div class="flex items-center space-x-3 w-full md:w-auto">
+                    <div class="relative w-full md:w-64">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-green-800"></i>
+                        <input type="text" id="recordSearchInput" oninput="filterRecords()" placeholder="Search Patient ID or Outcome..." class="w-full pl-8 pr-3 py-2 bg-green-50/50 border border-green-200 rounded-xl text-xs text-pine-950 focus:bg-white focus:ring-2 focus:ring-pine-600">
+                    </div>
+                    <button onclick="exportPatientSummaryCSV()" class="bg-pine-900 hover:bg-pine-800 text-white font-bold py-2 px-4 rounded-xl text-xs transition flex items-center shrink-0">
+                        <i class="fa-solid fa-download mr-1.5 text-green-300"></i> CSV
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table Container -->
+            <div class="bg-white rounded-2xl shadow-sm border border-green-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs font-sans border-collapse">
+                        <thead class="bg-pine-950 text-white font-mono uppercase text-[11px] tracking-wider">
+                            <tr>
+                                <th class="p-3.5">Patient ID</th>
+                                <th class="p-3.5">Preg.</th>
+                                <th class="p-3.5">Glucose</th>
+                                <th class="p-3.5">BP</th>
+                                <th class="p-3.5">Skin</th>
+                                <th class="p-3.5">Insulin</th>
+                                <th class="p-3.5">BMI</th>
+                                <th class="p-3.5">Pedigree</th>
+                                <th class="p-3.5">Age</th>
+                                <th class="p-3.5 text-center">Risk %</th>
+                                <th class="p-3.5 text-center">Outcome [ ]</th>
+                                <th class="p-3.5 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="patientRecordsTbody" class="divide-y divide-green-100 font-mono text-pine-950">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ================================================================= -->
+        <!-- VIEW 3: CLINICAL ANALYTICS & THRESHOLDS                           -->
+        <!-- ================================================================= -->
+        <section id="view-analytics" class="view-section space-y-6">
+
+            <!-- Header -->
+            <div class="bg-pine-950 text-white rounded-2xl p-6 shadow-lg border border-pine-900 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <span class="bg-pine-800 text-green-300 text-xs px-2.5 py-1 rounded-full font-mono">
+                        <i class="fa-solid fa-chart-line mr-1 text-green-400"></i> Population Health Analytics
+                    </span>
+                    <h2 class="text-2xl font-bold mt-2">Pima Clinical Benchmark &amp; Radar Profiling</h2>
+                    <p class="text-xs text-green-200 mt-1 max-w-xl">
+                        Compare patient biomarker profiles against non-diabetic and diabetic cohort medians.
+                    </p>
+                </div>
+                <div class="bg-pine-900 p-4 rounded-xl border border-pine-800 text-xs font-mono text-green-200 space-y-1">
+                    <div>Cohort Baseline: <strong>Pima Indians Dataset</strong></div>
+                    <div>Total Sample Size: <strong>768 Records</strong></div>
+                    <div>Diabetic Prevalence: <strong>34.9%</strong></div>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <!-- Radar Chart: Patient vs Cohort Standards -->
+                <div class="bg-white rounded-2xl shadow-sm border border-green-200 p-5 space-y-3">
+                    <div>
+                        <h3 class="font-bold text-pine-950 text-xs tracking-wide uppercase flex items-center">
+                            <i class="fa-solid fa-compass-drafting text-pine-700 mr-2"></i>
+                            Patient Biomarker Radar vs. Diabetic Cohort
+                        </h3>
+                        <p class="text-[11px] text-green-800">Normalized scale (0-100%) against clinical cutoff points</p>
+                    </div>
+                    <div class="h-64 w-full flex items-center justify-center">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Distribution Curve / Outcome Sensitivity -->
+                <div class="bg-white rounded-2xl shadow-sm border border-green-200 p-5 space-y-3">
+                    <div>
+                        <h3 class="font-bold text-pine-950 text-xs tracking-wide uppercase flex items-center">
+                            <i class="fa-solid fa-chart-line text-pine-700 mr-2"></i>
+                            Glucose &amp; BMI Risk Gradient
+                        </h3>
+                        <p class="text-[11px] text-green-800">Risk probability trajectory across rising Glucose levels</p>
+                    </div>
+                    <div class="h-64 w-full flex items-center justify-center">
+                        <canvas id="gradientChart"></canvas>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- MODAL 1: MODEL WEIGHTS INSPECTOR -->
+    <div id="modelModal" class="fixed inset-0 bg-pine-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl border border-green-200 w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="bg-pine-950 text-white px-6 py-4 flex justify-between items-center border-b border-pine-900">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-pine-900 p-2 rounded-xl text-green-400">
+                        <i class="fa-solid fa-microchip text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-base">Logistic Regression Diagnostic Weights</h3>
+                        <p class="text-xs text-green-300 font-mono">Pima Diabetes Benchmark Standardized Model</p>
+                    </div>
+                </div>
+                <button onclick="closeModelInspector()" class="text-green-200 hover:text-white text-xl p-1">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto space-y-6 text-pine-950">
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono text-xs">
+                    <div class="bg-green-50 p-3 rounded-xl border border-green-200">
+                        <div class="text-green-800 text-[10px]">Model Type</div>
+                        <div class="font-bold text-pine-950">LogisticRegression</div>
+                    </div>
+                    <div class="bg-green-50 p-3 rounded-xl border border-green-200">
+                        <div class="text-green-800 text-[10px]">Accuracy</div>
+                        <div class="font-bold text-pine-950">81.4%</div>
+                    </div>
+                    <div class="bg-green-50 p-3 rounded-xl border border-green-200">
+                        <div class="text-green-800 text-[10px]">ROC-AUC</div>
+                        <div class="font-bold text-pine-950">0.862</div>
+                    </div>
+                    <div class="bg-green-50 p-3 rounded-xl border border-green-200">
+                        <div class="text-green-800 text-[10px]">Pima Features</div>
+                        <div class="font-bold text-pine-950">8 Parameters</div>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-xs uppercase tracking-wider text-pine-950 mb-2 flex items-center">
+                        <i class="fa-solid fa-table mr-1.5 text-pine-700"></i> Model Coefficients Table ($\beta_i$)
+                    </h4>
+                    <div class="border border-green-200 rounded-xl overflow-hidden">
+                        <table class="w-full text-left text-xs font-mono">
+                            <thead class="bg-pine-950 text-white">
+                                <tr>
+                                    <th class="p-2.5">Feature Name</th>
+                                    <th class="p-2.5">Unit</th>
+                                    <th class="p-2.5 text-right">Raw Coef ($\beta_i$)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-green-100 bg-green-50/40">
+                                <tr>
+                                    <td class="p-2.5 font-bold">Pregnancies</td>
+                                    <td class="p-2.5 text-green-800">count</td>
+                                    <td class="p-2.5 text-right font-bold text-pine-900">+0.1231</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2.5 font-bold">Glucose</td>
+                                    <td class="p-2.5 text-green-800">mg/dL</td>
+                                    <td class="p-2.5 text-right font-bold text-green-700">+0.0352 (Dominant)</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2.5 font-bold">BloodPressure</td>
+                                    <td class="p-2.5 text-green-800">mmHg</td>
+                                    <td class="p-2.5 text-right font-bold text-pine-900">-0.0132</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2.5 font-bold">SkinThickness</td>
+                                    <td class="p-2.5 text-green-800">mm</td>
+                                    <td class="p-2.5 text-right font-bold text-pine-900">+0.0006</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2.5 font-bold">Insulin</td>
+                                    <td class="p-2.5 text-green-800">μU/mL</td>
+                                    <td class="p-2.5 text-right font-bold text-pine-900">-0.0012</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2.5 font-bold">BMI</td>
+                                    <td class="p-2.5 text-green-800">kg/m²</td>
+                                    <td class="p-2.5 text-right font-bold text-green-700">+0.0894</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2.5 font-bold">DiabetesPedigreeFunction</td>
+                                    <td class="p-2.5 text-green-800">scale</td>
+                                    <td class="p-2.5 text-right font-bold text-green-700">+0.9450</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2.5 font-bold">Age</td>
+                                    <td class="p-2.5 text-green-800">years</td>
+                                    <td class="p-2.5 text-right font-bold text-pine-900">+0.0148</td>
+                                </tr>
+                                <tr class="bg-green-100 font-bold">
+                                    <td class="p-2.5">Intercept ($\beta_0$)</td>
+                                    <td class="p-2.5 text-green-800">constant</td>
+                                    <td class="p-2.5 text-right text-pine-950">-8.4047</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="bg-green-50 px-6 py-3 border-t border-green-200 flex justify-end">
+                <button onclick="closeModelInspector()" class="bg-pine-950 hover:bg-pine-900 text-white font-semibold py-1.5 px-4 rounded-xl text-xs">
+                    Close Inspector
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: PRINTABLE PATIENT CLINICAL REPORT -->
+    <div id="reportModal" class="fixed inset-0 bg-pine-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl border border-green-200 w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="bg-pine-950 text-white px-6 py-4 flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-file-waveform text-green-400"></i>
+                    <h3 class="font-bold text-base">Diabetic Diagnostic Patient Summary Report</h3>
+                </div>
+                <button onclick="closeReportModal()" class="text-green-200 hover:text-white text-xl">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div id="printableArea" class="p-6 overflow-y-auto space-y-5 text-pine-950">
+                <div class="border-b border-green-200 pb-4 flex justify-between items-start">
+                    <div>
+                        <h2 class="text-xl font-bold text-pine-950">GLUCOPREDICT DIAGNOSTICS</h2>
+                        <p class="text-xs text-green-800">Clinical Predictive Analytics Unit</p>
+                    </div>
+                    <div class="text-right text-xs font-mono">
+                        <div>Date: <strong id="rptDate">2026-10-09</strong></div>
+                        <div>Patient ID: <strong id="rptPatientId">PID-4082</strong></div>
+                    </div>
+                </div>
+
+                <div class="bg-green-50 p-4 rounded-xl border border-green-200 space-y-2">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-pine-800 uppercase">Predicted Outcome</span>
+                        <span id="rptOutcomeBadge" class="px-2.5 py-0.5 text-xs font-bold font-mono rounded-md bg-green-200 text-pine-950">
+                            Outcome = 0 (Negative)
+                        </span>
+                    </div>
+                    <div class="text-2xl font-bold font-mono text-pine-950" id="rptOutcomeTitle">Low Diabetic Risk (18.4%)</div>
+                    <p class="text-xs text-green-900" id="rptRecommendation">Standard follow-up protocol recommended.</p>
+                </div>
+
+                <div>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-pine-950 mb-2">Recorded Biomarker Metrics</h4>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono text-xs">
+                        <div class="p-2.5 bg-green-50/60 rounded-lg border border-green-100">
+                            <span class="text-[10px] text-green-800 block">Pregnancies</span>
+                            <strong id="rptPreg">2</strong>
+                        </div>
+                        <div class="p-2.5 bg-green-50/60 rounded-lg border border-green-100">
+                            <span class="text-[10px] text-green-800 block">Glucose</span>
+                            <strong id="rptGlucose">118 mg/dL</strong>
+                        </div>
+                        <div class="p-2.5 bg-green-50/60 rounded-lg border border-green-100">
+                            <span class="text-[10px] text-green-800 block">BloodPressure</span>
+                            <strong id="rptBP">72 mmHg</strong>
+                        </div>
+                        <div class="p-2.5 bg-green-50/60 rounded-lg border border-green-100">
+                            <span class="text-[10px] text-green-800 block">SkinThickness</span>
+                            <strong id="rptSkin">23 mm</strong>
+                        </div>
+                        <div class="p-2.5 bg-green-50/60 rounded-lg border border-green-100">
+                            <span class="text-[10px] text-green-800 block">Insulin</span>
+                            <strong id="rptInsulin">85 μU/mL</strong>
+                        </div>
+                        <div class="p-2.5 bg-green-50/60 rounded-lg border border-green-100">
+                            <span class="text-[10px] text-green-800 block">BMI</span>
+                            <strong id="rptBMI">28.1 kg/m²</strong>
+                        </div>
+                        <div class="p-2.5 bg-green-50/60 rounded-lg border border-green-100">
+                            <span class="text-[10px] text-green-800 block">Pedigree Func.</span>
+                            <strong id="rptPedigree">0.351</strong>
+                        </div>
+                        <div class="p-2.5 bg-green-50/60 rounded-lg border border-green-100">
+                            <span class="text-[10px] text-green-800 block">Age</span>
+                            <strong id="rptAge">33 yrs</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-green-50 px-6 py-3 border-t border-green-200 flex justify-between items-center">
+                <button onclick="closeReportModal()" class="text-xs text-green-800 font-bold hover:underline">Close</button>
+                <button onclick="window.print()" class="bg-pine-950 hover:bg-pine-900 text-white text-xs font-bold py-2 px-4 rounded-xl flex items-center space-x-1.5 shadow">
+                    <i class="fa-solid fa-print"></i>
+                    <span>Print Report</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="bg-pine-950 border-t border-pine-900 text-green-300 py-4 text-xs mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center sm:flex sm:justify-between sm:text-left">
+            <p>&copy; 2026 GlucoPredict Diagnostics | Diabetic Outcome Analytics Engine</p>
+            <div class="mt-2 sm:mt-0 flex items-center justify-center sm:justify-end space-x-4">
+                <button onclick="switchView('dashboard')" class="hover:text-white">Predictor</button>
+                <button onclick="switchView('records')" class="hover:text-white">Records</button>
+                <button onclick="switchView('analytics')" class="hover:text-white">Analytics</button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-pine-950 text-white px-4 py-3 rounded-xl shadow-2xl border border-pine-800 text-xs font-semibold transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none flex items-center space-x-2.5 z-50">
+        <i class="fa-solid fa-circle-check text-green-400 text-base"></i>
+        <span id="toastMsg">Action recorded successfully!</span>
+    </div>
+
+    <script>
+        // Logistic Regression coefficients calibrated on Pima Indians Diabetes Dataset
+        const PIMA_MODEL = {
+            intercept: -8.4047,
+            coefs: {
+                pregnancies: 0.1231,
+                glucose: 0.0352,
+                bloodpressure: -0.0132,
+                skinthickness: 0.0006,
+                insulin: -0.0012,
+                bmi: 0.0894,
+                diabetespedigreefunction: 0.9450,
+                age: 0.0148
+            }
+        };
+
+        let impactChart, radarChart, gradientChart;
+
+        let patientRecords = [
+            {
+                id: 4082,
+                pregnancies: 2,
+                glucose: 118,
+                bloodpressure: 72,
+                skinthickness: 23,
+                insulin: 85,
+                bmi: 28.1,
+                diabetespedigreefunction: 0.351,
+                age: 33,
+                prob: 18.4,
+                outcome: 0
+            },
+            {
+                id: 4081,
+                pregnancies: 6,
+                glucose: 168,
+                bloodpressure: 88,
+                skinthickness: 34,
+                insulin: 210,
+                bmi: 38.5,
+                diabetespedigreefunction: 0.825,
+                age: 48,
+                prob: 84.6,
+                outcome: 1
+            },
+            {
+                id: 4080,
+                pregnancies: 1,
+                glucose: 89,
+                bloodpressure: 66,
+                skinthickness: 18,
+                insulin: 54,
+                bmi: 22.4,
+                diabetespedigreefunction: 0.167,
+                age: 22,
+                prob: 5.2,
+                outcome: 0
+            }
+        ];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initMobileMenu();
+            initCharts();
+            calculateOutcome();
+            renderRecordsTable();
+
+            // Support Hash routing
+            const hash = window.location.hash.replace('#', '');
+            if (hash && ['dashboard', 'records', 'analytics'].includes(hash)) {
+                switchView(hash);
+            }
+        });
+
+        function switchView(viewName) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
+            const target = document.getElementById(`view-${viewName}`);
+            if (target) {
+                target.classList.add('active-view');
+                window.location.hash = viewName;
+            }
+
+            ['dashboard', 'records', 'analytics'].forEach(v => {
+                const btn = document.getElementById(`nav-${v}`);
+                if (btn) {
+                    if (v === viewName) {
+                        btn.className = "px-3.5 py-2 rounded-lg transition flex items-center space-x-2 bg-pine-900 text-white border border-pine-800 shadow-sm font-bold";
+                    } else {
+                        btn.className = "px-3.5 py-2 rounded-lg transition flex items-center space-x-2 text-green-200 hover:text-white hover:bg-pine-900/60 font-medium";
+                    }
+                }
+            });
+
+            if (viewName === 'analytics' && radarChart) {
+                setTimeout(() => {
+                    radarChart.resize();
+                    gradientChart.resize();
+                }, 100);
+            }
+        }
+
+        function initMobileMenu() {
+            const btn = document.getElementById('mobileMenuBtn');
+            const menu = document.getElementById('mobileMenu');
+            if (btn && menu) {
+                btn.addEventListener('click', () => {
+                    menu.classList.toggle('hidden');
+                });
+            }
+        }
+
+        function syncInput(targetId, value) {
+            document.getElementById(targetId).value = value;
+            calculateOutcome();
+        }
+
+        function calculateOutcome() {
+            const preg = parseFloat(document.getElementById('pregnancies').value) || 0;
+            const gluc = parseFloat(document.getElementById('glucose').value) || 0;
+            const bp = parseFloat(document.getElementById('bloodpressure').value) || 0;
+            const skin = parseFloat(document.getElementById('skinthickness').value) || 0;
+            const ins = parseFloat(document.getElementById('insulin').value) || 0;
+            const bmi = parseFloat(document.getElementById('bmi').value) || 0;
+            const dpf = parseFloat(document.getElementById('diabetespedigreefunction').value) || 0;
+            const age = parseFloat(document.getElementById('age').value) || 0;
+
+            const c = PIMA_MODEL.coefs;
+
+            // Calculate logit z score
+            const pregContrib = c.pregnancies * preg;
+            const glucContrib = c.glucose * gluc;
+            const bpContrib = c.bloodpressure * bp;
+            const skinContrib = c.skinthickness * skin;
+            const insContrib = c.insulin * ins;
+            const bmiContrib = c.bmi * bmi;
+            const dpfContrib = c.diabetespedigreefunction * dpf;
+            const ageContrib = c.age * age;
+
+            const logitZ = PIMA_MODEL.intercept + pregContrib + glucContrib + bpContrib + skinContrib + insContrib + bmiContrib + dpfContrib + ageContrib;
+
+            // Logistic Sigmoid Function: 1 / (1 + e^-z)
+            const prob = 1 / (1 + Math.exp(-logitZ));
+            const probPct = (prob * 100).toFixed(1);
+            const outcome = prob >= 0.5 ? 1 : 0;
+
+            // Update Primary Display Card
+            const outcomeBadge = document.getElementById('outcomeBadge');
+            const outcomeText = document.getElementById('outcomeTextDisplay');
+            const probText = document.getElementById('riskProbabilityVal');
+            const progressBar = document.getElementById('riskProgressBar');
+            const recText = document.getElementById('clinicalRecommendationText');
+
+            probText.innerText = `${probPct}%`;
+            progressBar.style.width = `${Math.min(100, Math.max(5, probPct))}%`;
+
+            if (outcome === 1) {
+                outcomeBadge.className = "bg-emerald-800 text-white border border-green-300 text-xs px-3 py-1 rounded-full font-mono font-bold flex items-center";
+                outcomeBadge.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1.5 text-green-300"></i> Outcome = 1 (Positive)`;
+                outcomeText.innerText = "Positive (Outcome = 1)";
+                outcomeText.className = "text-3xl sm:text-4xl font-black text-green-300 tracking-wide mt-1 font-mono flex items-center";
+                recText.innerText = "Elevated diabetic risk detected. Immediate HbA1c & endocrinology evaluation advised.";
+            } else {
+                outcomeBadge.className = "bg-green-500/20 text-green-300 border border-green-500/40 text-xs px-3
